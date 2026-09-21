@@ -291,6 +291,29 @@
     50%      { transform: translateX(5px); opacity: 1; }
   }
 
+  /* 표지가 차례로 떠오른다 — 산 그림, 제목과 부제, 행사 안내, 그리고 넘기라는 신호.
+     to 를 적지 않으면 제자리가 곧 끝점이다. 채우기를 backwards 로만 두는 이유는,
+     끝난 뒤에도 애니메이션이 걸려 있으면 그 겹이 따로 합성된 채로 남아
+     안드로이드 웹뷰에서 엉뚱한 순서로 그려질 여지를 남기기 때문이다. */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+  }
+
+  .cover .mountain,
+  .cover-head,
+  .cover-event,
+  .hint {
+    animation: rise .6s var(--ease-out) backwards;
+  }
+
+  .cover .mountain { animation-delay: .10s; }
+  .cover-head      { animation-delay: .48s; }
+  .cover-event     { animation-delay: .78s; }
+  .hint            { animation-delay: 1.05s; }
+
+  /* 뒷면에 비치는 복제본에서는 다시 떠오를 이유가 없다 */
+  .ghost * { animation: none !important; }
+
   /* 가로로 넓으면 "왼쪽 산 그림 + 오른쪽 글" 로 눕힌다 */
   @media (min-aspect-ratio: 3/2) {
     .cover {
@@ -617,6 +640,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hint svg { animation: none; }
+    .cover .mountain, .cover-head, .cover-event, .hint { animation: none; }
     .leaf { clip-path: none !important; }
     .turn { visibility: hidden !important; }
   }
