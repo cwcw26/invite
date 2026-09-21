@@ -159,6 +159,21 @@
     width: 100%;
   }
 
+  /* 넘어가는 쪽의 글자가 옅어지는 효과.
+     쪽 자체의 투명도를 매 칸 건드리면 그 쪽이 따로 합성되는데, 안드로이드 웹뷰에서는
+     그렇게 생긴 겹이 엉뚱한 순서로 남아 다른 쪽 사진이 비쳐 보인다(카톡 인앱 브라우저).
+     그래서 쪽은 건드리지 않고, 같은 질감의 빈 종이 한 겹을 위에 덮어 같은 그림을 만든다. */
+  .wash {
+    background-color: var(--ground);
+    background-image: var(--paper-white);
+    background-size: calc(210 * var(--u)) calc(125 * var(--u));
+  }
+
+  .turn[data-cover] .wash {
+    background-color: var(--paper);
+    background-image: var(--paper-green);
+  }
+
   /* 서 있는 종이가 드러난 쪽에 드리우는 그림자 */
   .cast { background: linear-gradient(to right, rgba(0, 0, 0, .32), rgba(0, 0, 0, 0) 58px); }
 
@@ -208,13 +223,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;   /* 제목을 맨 위에 붙이고, 남는 자리는 아래에 둔다 */
-    padding: calc(28 * var(--u)) var(--gutter);
+    justify-content: flex-start;   /* 제목을 위쪽에 붙이고, 남는 자리는 아래에 둔다 */
+    padding: calc(42 * var(--u)) var(--gutter) calc(28 * var(--u));
     text-align: center;
   }
 
-  /* 제목과 부제가 맨 위, 그 밑에 산 그림, 맨 아래 행사 안내 */
-  .cover .mountain { width: calc(189.7 * var(--u)); flex: none; margin-top: calc(44 * var(--u)); }
+  /* 제목과 부제가 위, 그 밑에 산 그림, 맨 아래 행사 안내.
+     위 여백과 그림 앞 여백을 같은 만큼 주고받아, 글만 내려오고 그림과 안내는 제자리다 */
+  .cover .mountain { width: calc(189.7 * var(--u)); flex: none; margin-top: calc(30 * var(--u)); }
 
   .cover-head {
     display: flex;
@@ -558,6 +574,7 @@
     height: 44px;
     border-radius: 50%;
     overflow: hidden;
+    clip-path: circle(50%);      /* 웹뷰에 따라 iframe 이 overflow 를 새고 나간다. 한 겹 더 잘라 둔다 */
     z-index: 100;
   }
 
@@ -939,6 +956,7 @@
 </div>
 
 <div class="turn" id="turn" aria-hidden="true">
+  <div class="wash" id="wash"></div>
   <div class="cast" id="cast"></div>
   <div class="edge" id="edge"></div>
   <div class="skin" id="skin"></div>
@@ -993,6 +1011,7 @@
   const flap = document.getElementById('flap');
   const skin = document.getElementById('skin');
   const ghost = document.getElementById('ghost');
+  const wash = document.getElementById('wash');
   const cast = document.getElementById('cast');
   const edge = document.getElementById('edge');
   const calm = matchMedia('(prefers-reduced-motion: reduce)');
@@ -1017,8 +1036,13 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   // 맨 위에 올 장을 정한다. 접히는 장이 그 아래 장을 덮고 있어야 한다.
+  // 맨 위에 올 장을 정하고, 쓰이지 않는 장은 아예 감춘다.
+  // 열여덟 장을 모두 겹쳐 두면 그만큼 합성할 겹이 늘어 웹뷰에서 순서가 어긋날 여지가 커진다.
   function stack(top) {
-    leaves.forEach((leaf, i) => { leaf.style.zIndex = i === top ? 3 : (i === top + 1 ? 2 : 1); });
+    leaves.forEach((leaf, i) => {
+      leaf.style.zIndex = i === top ? 3 : (i === top + 1 ? 2 : 1);
+      leaf.style.visibility = (i === top || i === top + 1) ? '' : 'hidden';
+    });
   }
 
   function setPage(i) {
@@ -1036,10 +1060,9 @@
     ghost.replaceChildren(leaves[i].firstElementChild.cloneNode(true));
   }
 
-  // 접히던 장을 원래대로 돌린다 (잘린 자국도, 옅어진 앞면도)
+  // 접히던 장을 원래대로 돌린다
   function unfold(i) {
     leaves[i].style.clipPath = '';
-    leaves[i].firstElementChild.style.opacity = '';
   }
 
   function render() {
@@ -1069,8 +1092,10 @@
     // 내려앉게 해서, 잘리는 순간에는 이미 비쳐 보이는 정도가 되어 있게 한다.
     // 처음엔 거의 그대로 두고 뒤로 갈수록 빠르게 옅어진다. 막 들리기 시작한 종이까지
     // 같이 바래면 넘어가는 게 아니라 글이 지워지는 것처럼 보인다.
-    const wear = 1 - Math.min(1, q) * Math.min(1, q);
-    leaves[fold].firstElementChild.style.opacity = (0.12 + 0.88 * wear).toFixed(3);
+    // 옅게 하는 일은 쪽이 아니라 그 위에 덮는 빈 종이(.wash)가 맡는다 — 위 설명 참고.
+    const veil = 0.88 * Math.min(1, q) * Math.min(1, q);
+    wash.style.clipPath = `inset(0 ${pct(cut)} 0 0)`;
+    wash.style.opacity = veil.toFixed(3);
     // 접혀 올라온 띠는 바깥 모서리(1-q) 부터 접힌 자국(1-half) 까지다.
     skin.style.clipPath = `inset(0 ${pct(lip)} 0 ${pct(Math.max(0, 1 - q))})`;
     // 비침은 좌우가 뒤집힌다. 뒤집힌 제 좌표에서 그 띠는 (1-half) 오른쪽이 된다.
@@ -1130,6 +1155,8 @@
     fold = i;
     stack(i);
     prepGhost(i);
+    if (i === 0) turn.dataset.cover = '1';   // 표지를 덮는 빈 종이는 초록이어야 한다
+    else delete turn.dataset.cover;
   }
 
   // 넘어가던 것을 그 자리에서 매듭짓는다 (연달아 넘길 때 기다리지 않도록)
