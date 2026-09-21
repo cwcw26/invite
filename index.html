@@ -547,49 +547,50 @@
   /* 휴대폰 브라우저는 소리 나는 재생을 "그 창 안에서 일어난 손짓" 뒤에만 허용한다.
      부모 창의 탭은 유튜브 창까지 전해지지 않으므로(특히 아이폰), 유튜브 창을 단추 위에
      투명하게 덮어 두고 손이 유튜브를 직접 누르게 한다. 멈추는 것은 손짓이 없어도 되므로
-     그때는 창이 손짓을 받지 않게 비켜 두고 우리가 멈춘다. */
+     그때는 창이 손짓을 받지 않게 비켜 두고 우리가 멈춘다.
+
+     동그라미가 44px 인 이유: 유튜브의 큰 재생 단추는 플레이어를 키워도 68×48 로 고정이다.
+     눌러야 하는 곳이 그 밖으로 한 점이라도 나가면 그 탭은 아무 일도 하지 않고, 심지어
+     재생 단추가 숨어 버려 다음 탭까지 먹힌다. 그래서 탭 영역을 통째로 그 안에 넣는다. */
   .music {
     position: fixed;
     top: calc(14px + env(safe-area-inset-top, 0px));
     right: max(14px, calc(50% - 258px));
-    height: 40px;
-    border-radius: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     overflow: hidden;
     z-index: 100;
   }
 
   .music-btn {
-    display: flex;
-    align-items: center;
-    gap: 7px;
+    display: grid;
+    place-items: center;
+    width: 100%;
     height: 100%;
     margin: 0;
-    padding: 0 14px 0 12px;
+    padding: 0;
     border: 1px solid currentColor;
-    border-radius: 20px;
+    border-radius: 50%;
     background: transparent;
     color: var(--ink-faint);
-    font: inherit;
-    font-size: 15px;
-    letter-spacing: .04em;
-    white-space: nowrap;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     transition: color 240ms ease;
   }
 
-  .music-btn svg { width: 17px; height: 17px; flex: none; }
+  .music-btn svg { width: 18px; height: 18px; }
   .music-btn .slash { transition: opacity 260ms ease; }
   .music[data-on] .slash { opacity: 0; }
 
-  /* 유튜브 창. 재생 단추가 단추 한가운데 오도록 겹쳐 두고, 둥근 테두리로 잘라 둔다 */
+  /* 유튜브 창. 재생 단추가 동그라미 한가운데 오도록 겹쳐 두고, 동그라미로 잘라 둔다 */
   .music-frame {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 240px;
     height: 135px;
-    margin: -68px 0 0 -120px;
+    transform: translate(-50%, -50%);
     border: 0;
     opacity: 0;
   }
@@ -964,7 +965,6 @@
       <circle cx="13.4" cy="12" r="2.2"/>
       <path class="slash" d="M3.2 16.8 16.8 3.2"/>
     </svg>
-    음악
   </button>
   <iframe class="music-frame" id="tune" title="배경 음악 — Domenico Zipoli, Adagio"
           allow="autoplay; encrypted-media" frameborder="0"></iframe>
