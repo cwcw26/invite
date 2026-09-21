@@ -165,26 +165,13 @@
   /* 접혀 올라온 종이의 바깥 모서리가 아래에 드리우는 그림자 */
   .edge { background: linear-gradient(to left, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0) 34px); }
 
-  /* 접혀 올라온 뒷면 */
-  .flap {
-    overflow: hidden;
-    transform-origin: left center;
-    background-color: var(--ground);
-  }
+  /* 접혀 올라온 뒷면. 세 겹 모두 화면만 한 상자를 그대로 두고 clip-path 로 띠만 남긴다.
+     예전에는 .flap 을 접힌 폭만큼 납작하게 눌러 두고 그 안에서 종이결과 비침을 거꾸로
+     늘려 되돌렸는데, 넘김이 막 시작될 때 그 배율이 140배까지 올라가고 눌린 상자의
+     overflow 로 잘라야 해서 — 안드로이드 웹뷰에서 그 자름이 새면 앞뒤 쪽이 겹쳐 보인다. */
 
-  /* 접힌 자국 쪽이 어둡고 바깥 모서리로 갈수록 밝다 */
-  .flap::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, rgba(0, 0, 0, .03), rgba(0, 0, 0, .17) 97%, rgba(255, 255, 255, .3));
-  }
-
-  /* 뒷면의 종이결. 접히면서 눌리지 않도록 되돌려 놓는다 */
+  /* 접혀 올라온 종이 (바탕색 + 종이결) */
   .skin {
-    position: absolute;
-    inset: 0;
-    transform-origin: left center;
     background-color: var(--ground);
     background-image: var(--paper-white);
     background-size: calc(210 * var(--u)) calc(125 * var(--u));
@@ -192,10 +179,14 @@
 
   /* 뒷면에 비쳐 보이는 앞면의 글자. 종이 너머로 비치듯 옅게, 좌우가 뒤집혀 있다 */
   .ghost {
-    position: absolute;
-    inset: 0;
     transform-origin: left center;
     opacity: .12;
+  }
+
+  /* 접힌 자국 쪽이 어둡고 바깥 모서리로 갈수록 밝다. 이 명암만 접힌 폭으로 눌러 둔다 */
+  .flap {
+    transform-origin: left center;
+    background: linear-gradient(to right, rgba(0, 0, 0, .03), rgba(0, 0, 0, .17) 97%, rgba(255, 255, 255, .3));
   }
 
   .leaf:first-of-type { z-index: 3; }
@@ -217,13 +208,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;   /* 제목을 맨 위에 붙이고, 남는 자리는 아래에 둔다 */
     padding: calc(28 * var(--u)) var(--gutter);
     text-align: center;
   }
 
   /* 제목과 부제가 맨 위, 그 밑에 산 그림, 맨 아래 행사 안내 */
-  .cover .mountain { width: calc(189.7 * var(--u)); flex: none; margin-top: calc(56 * var(--u)); }
+  .cover .mountain { width: calc(189.7 * var(--u)); flex: none; margin-top: calc(44 * var(--u)); }
 
   .cover-head {
     display: flex;
@@ -950,10 +941,9 @@
 <div class="turn" id="turn" aria-hidden="true">
   <div class="cast" id="cast"></div>
   <div class="edge" id="edge"></div>
-  <div class="flap" id="flap">
-    <div class="skin" id="skin"></div>
-    <div class="ghost" id="ghost"></div>
-  </div>
+  <div class="skin" id="skin"></div>
+  <div class="ghost" id="ghost"></div>
+  <div class="flap" id="flap"></div>
 </div>
 
 <button class="nav prev" id="prev" type="button" aria-label="앞쪽">
@@ -1071,6 +1061,7 @@
     // 앞장은 접힌 자국이 아니라 접힌 종이의 바깥 모서리에서 자른다(2px 겹쳐서 이음새 없이).
     // 절반을 넘기면 앞장은 통째로 접힌 쪽에 있으므로 사라지고, 접힌 종이만 내려앉는다.
     const cut = Math.min(1, Math.max(0, q - 2 / w));
+    const lip = Math.max(0, half - 2 / w);    // 접힌 자국 쪽 끝. 2px 넉넉히 덮어 실오라기를 막는다
     leaves[fold].style.clipPath = `inset(0 ${pct(cut)} 0 0)`;
 
     // 들린 만큼 앞면의 글자와 사진이 옅어진다. 그냥 두면 자국을 따라 글자가 획 중간에서
@@ -1080,9 +1071,12 @@
     // 같이 바래면 넘어가는 게 아니라 글이 지워지는 것처럼 보인다.
     const wear = 1 - Math.min(1, q) * Math.min(1, q);
     leaves[fold].firstElementChild.style.opacity = (0.12 + 0.88 * wear).toFixed(3);
+    // 접혀 올라온 띠는 바깥 모서리(1-q) 부터 접힌 자국(1-half) 까지다.
+    skin.style.clipPath = `inset(0 ${pct(lip)} 0 ${pct(Math.max(0, 1 - q))})`;
+    // 비침은 좌우가 뒤집힌다. 뒤집힌 제 좌표에서 그 띠는 (1-half) 오른쪽이 된다.
+    ghost.style.transform = `translateX(${pct(2 - q)}) scaleX(-1)`;
+    ghost.style.clipPath = `inset(0 0 0 ${pct(Math.max(0, 1 - half - 2 / w))})`;
     flap.style.transform = `translateX(${pct(1 - q)}) scaleX(${wide.toFixed(4)})`;
-    skin.style.transform = `scaleX(${(1 / wide).toFixed(4)})`;
-    ghost.style.transform = `translateX(${pct(1 / wide)}) scaleX(${(-1 / wide).toFixed(4)})`;
     cast.style.transform = `translateX(${pct(1 - half)})`;
     edge.style.transform = `translateX(${pct(-q)})`;
 
