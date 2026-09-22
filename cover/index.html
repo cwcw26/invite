@@ -1,17 +1,19 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="robots" content="noindex, nofollow">
 <meta charset="utf-8">
+<meta name="robots" content="noindex">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="산 너머 삶">
 <meta property="og:title" content="산 너머 삶 — 출판기념 소음악회">
-<meta property="og:description" content="2026년 10월 30일 (금) 오후 5시 · 몽유도원">
-<meta property="og:url" content="https://cwcw26.github.io/invite/cover/">
-<meta property="og:image" content="https://cwcw26.github.io/invite/cover/thumb.jpg">
+<meta property="og:description" content="2026년 10월 30일 (금) 오후 5시 · 몽유도원 (종로구 창의문로 11길 10)">
+<meta property="og:url" content="https://cwcw26.github.io/invite/">
+<meta property="og:image" content="https://cwcw26.github.io/invite/og.jpg?v=1">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="부암동에서 시작된 꿈, 히말라야를 넘어 파타고니아까지. 출판기념 소음악회에 초대합니다.">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산 너머 삶</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,9 +49,10 @@
     color-scheme: light;
   }
 
-  /* 휴대폰 주소창을 뺀 실제 보이는 높이 기준 (지원하는 브라우저만) */
-  @supports (height: 100svh) {
-    :root { --u: min(calc((100vw - 48px) / 220), calc(392px / 220), calc((100svh - 24px) / 530)); }
+  /* 주소창이 접힌 상태(가장 큰 높이) 기준. 이 값은 스크롤해도 변하지 않는다.
+     보이는 높이(svh·vh)로 재면 주소창이 접히는 순간 표지가 커져 눈에 띄게 튄다. */
+  @supports (height: 100lvh) {
+    :root { --u: min(calc((100vw - 48px) / 220), calc(392px / 220), calc((var(--h0, 100lvh) - 24px) / 530)); }
   }
 
   /* 가로로 넓은 화면(링크 썸네일 캡처 1200×630, PC, 가로로 든 휴대폰)에서는
@@ -57,8 +60,8 @@
      폭 약 470pt(산 190 + 간격 56 + 부제 220), 높이 약 236pt 기준. */
   @media (min-aspect-ratio: 3/2) {
     :root { --u: min(calc((100vw - 48px) / 470), calc((100vh - 24px) / 236), 2px); }
-    @supports (height: 100svh) {
-      :root { --u: min(calc((100vw - 48px) / 470), calc((100svh - 24px) / 236), 2px); }
+    @supports (height: 100lvh) {
+      :root { --u: min(calc((100vw - 48px) / 470), calc((100lvh - 24px) / 236), 2px); }
     }
   }
 
@@ -109,7 +112,8 @@
 
   .cover {
     min-height: 100vh;
-    min-height: 100svh;
+    min-height: 100lvh;
+    min-height: var(--h0, 100lvh);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -679,6 +683,22 @@
 </main>
 
 <script>
+  // 표지 크기를 열릴 때 한 번만 정한다.
+  // 화면 높이 단위는 주소창이 접히거나 페이지를 감싼 틀이 커지면 다시 계산되고,
+  // 그때마다 표지가 눈에 띄게 커졌다. 그 높이를 px 로 굳혀 놓으면 변하지 않는다.
+  function lockCoverHeight() {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;top:0;left:0;width:0;height:100lvh;visibility:hidden';
+    document.body.appendChild(probe);
+    const h = probe.offsetHeight;
+    probe.remove();
+    if (h > 0) document.documentElement.style.setProperty('--h0', h + 'px');
+  }
+
+  lockCoverHeight();
+  // 가로로 돌리면 기준 자체가 달라지므로 그때만 다시 잰다
+  addEventListener('orientationchange', () => setTimeout(lockCoverHeight, 300));
+
   // 사진 슬라이드
   // - 손가락으로 넘기거나 이전/다음 버튼을 누른다.
   // - 화면에 보이는 동안에만 4.5초마다 넘어가고, 마지막 장에서 멈춘다.
