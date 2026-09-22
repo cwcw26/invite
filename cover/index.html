@@ -458,6 +458,15 @@
     fill: currentColor;
   }
 
+  /* 열자마자 소리를 못 낸 경우에만, 단추가 여기 있다고 한 번 알린다.
+     어르신들이 받는 초대장이라 가만히 두면 단추를 못 보고 지나친다. */
+  @keyframes bgm-nudge {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.07); }
+  }
+
+  .bgm.is-nudging { animation: bgm-nudge 1.4s var(--ease-out) 2; }
+
   /* 링크 미리보기 그림에는 산 그림·제목·문구만 담는다 */
   @media (min-aspect-ratio: 3/2) and (max-height: 500px) {
     .bgm { display: none; }
@@ -567,13 +576,13 @@
         <p class="composer">P. de Sarasate</p>
         <p class="title">Carmen Fantasy</p>
         <p class="ensemble">크로이츠 앙상블</p>
-        <p class="players"><span class="who"><span class="part">Piano</span> 강수연</span> <span class="who"><span class="part">Cello</span> 김상호</span> <span class="who"><span class="part">Violin</span> 김유지</span></p>
+        <p class="players"><span class="who"><span class="part">Piano</span> 강수연</span> <span class="who"><span class="part">Violin</span> 김유지</span> <span class="who"><span class="part">Cello</span> 김상호</span></p>
       </div>
       <div class="piece">
         <p class="composer">A. Piazzolla</p>
         <p class="title">Libertango</p>
         <p class="ensemble">크로이츠 앙상블</p>
-        <p class="players"><span class="who"><span class="part">Piano</span> 강수연</span> <span class="who"><span class="part">Cello</span> 김상호</span> <span class="who"><span class="part">Violin</span> 김유지</span></p>
+        <p class="players"><span class="who"><span class="part">Piano</span> 강수연</span> <span class="who"><span class="part">Violin</span> 김유지</span> <span class="who"><span class="part">Cello</span> 김상호</span></p>
       </div>
       <div class="piece">
         <p class="composer">L. Bernstein</p>
@@ -588,11 +597,6 @@
       <div class="piece">
         <p class="composer">F. P. Tosti</p>
         <p class="title">Ideale</p>
-        <p class="players"><span class="who"><span class="part">Tenor</span> 박대선</span></p>
-      </div>
-      <div class="piece">
-        <p class="composer">윤학준</p>
-        <p class="title">마중</p>
         <p class="players"><span class="who"><span class="part">Tenor</span> 박대선</span></p>
       </div>
       <div class="piece">
@@ -736,28 +740,22 @@
   // - 열자마자 틀어 본다.
   // - 휴대폰은 대개 소리를 막으므로, 화면을 처음 건드리는 순간(스크롤 포함) 다시 튼다.
   // - 한 번 소리가 난 뒤로는 오른쪽 위 단추로만 켜고 끈다.
+  // 소리 크기는 음원 파일 자체를 절반(-6dB)으로 구워 두었다. 아이폰은 `volume` 을
+  // 무시하므로(기기에서만 정한다) 코드로 줄이면 아이폰만 크게 나온다.
   const bgm = document.getElementById('bgm');
   const bgmBtn = document.getElementById('bgm-toggle');
   const bgmLabel = document.getElementById('bgm-label');
   const WAKE = ['pointerdown', 'touchstart', 'touchend', 'keydown'];
-  let fade = null;
   let pausedByLeaving = false;
 
   function paintBgm(on) {
+    if (on) bgmBtn.classList.remove('is-nudging');
     bgmLabel.textContent = on ? '음악 끄기' : '음악 듣기';
   }
 
   function startBgm() {
     return bgm.play().then(() => {
       WAKE.forEach((type) => document.removeEventListener(type, wakeBgm));
-      // 갑자기 크게 나지 않도록 천천히 올린다. (아이폰은 소리 크기를 기기에서만 정한다)
-      clearInterval(fade);
-      bgm.volume = 0;
-      fade = setInterval(() => {
-        const next = Math.min(.5, bgm.volume + .05);
-        bgm.volume = next;
-        if (next >= .5) { clearInterval(fade); fade = null; }
-      }, 50);
       paintBgm(true);
     }).catch(() => {});
   }
@@ -783,7 +781,12 @@
 
   paintBgm(false);
   WAKE.forEach((type) => document.addEventListener(type, wakeBgm, { passive: true }));
-  startBgm();
+
+  // 막혔으면(휴대폰은 거의 늘 막힌다) 단추를 한 번 알린다.
+  // 스크롤은 브라우저가 손짓으로 쳐 주지 않으므로 단추나 화면 누르기가 필요하다.
+  startBgm().then(() => {
+    if (bgm.paused) bgmBtn.classList.add('is-nudging');
+  });
 </script>
 
 </body>
