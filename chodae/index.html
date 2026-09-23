@@ -49,10 +49,12 @@
     color-scheme: light;
   }
 
-  /* 열릴 때 보이던 높이(--h0)를 기준으로 삼는다. JS 가 한 번만 재서 넣는다.
-     그 높이에 맞춰야 표지가 화면 안에 들어오고, 한 번 정하면 주소창이 접혀도 변하지 않는다. */
+  /* 주소창이 펼쳐진 상태의 높이(svh) 를 기준으로 삼는다.
+     이 값은 브라우저가 정해 두는 상수라 스크롤해도, 언제 열든 똑같다.
+     열릴 때 innerHeight 를 재서 쓰면 그 순간 주소창이 접혀 있었는지에 따라
+     표지 크기가 15% 씩 달라진다(확대돼 보이고 주소 줄이 잘린다). */
   @supports (height: 100svh) {
-    :root { --u: min(calc((100vw - 48px) / 220), calc(392px / 220), calc((var(--h0, 100svh) - 24px) / 530)); }
+    :root { --u: min(calc((100vw - 48px) / 220), calc(392px / 220), calc((100svh - 24px) / 530)); }
   }
 
   /* 가로로 넓은 화면(링크 썸네일 캡처 1200×630, PC, 가로로 든 휴대폰)에서는
@@ -61,7 +63,7 @@
   @media (min-aspect-ratio: 3/2) {
     :root { --u: min(calc((100vw - 48px) / 470), calc((100vh - 24px) / 236), 2px); }
     @supports (height: 100svh) {
-      :root { --u: min(calc((100vw - 48px) / 470), calc((var(--h0, 100svh) - 24px) / 236), 2px); }
+      :root { --u: min(calc((100vw - 48px) / 470), calc((100svh - 24px) / 236), 2px); }
     }
   }
 
@@ -113,7 +115,6 @@
   .cover {
     min-height: 100vh;
     min-height: 100svh;
-    min-height: var(--h0, 100svh);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -683,18 +684,6 @@
 </main>
 
 <script>
-  // 표지 크기를 열릴 때 한 번만 정한다.
-  // 화면 높이 단위는 주소창이 접히거나 페이지를 감싼 틀이 커지면 다시 계산되고,
-  // 그때마다 표지가 눈에 띄게 커졌다. 그 높이를 px 로 굳혀 놓으면 변하지 않는다.
-  function lockCoverHeight() {
-    const h = window.innerHeight;
-    if (h > 0) document.documentElement.style.setProperty('--h0', h + 'px');
-  }
-
-  lockCoverHeight();
-  // 가로로 돌리면 기준 자체가 달라지므로 그때만 다시 잰다
-  addEventListener('orientationchange', () => setTimeout(lockCoverHeight, 300));
-
   // 사진 슬라이드
   // - 손가락으로 넘기거나 이전/다음 버튼을 누른다.
   // - 화면에 보이는 동안에만 4.5초마다 넘어가고, 마지막 장에서 멈춘다.
