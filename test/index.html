@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>소리 비교</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:22px; background:#20903A; color:#fff;
+         font-family:'Noto Serif KR', AppleMyungjo, serif; padding:28px; box-sizing:border-box; }
+  h1 { font-size:21px; font-weight:500; margin:0 0 4px; }
+  p  { margin:0; font-size:16px; line-height:1.7; text-align:center; opacity:.9; }
+  button { width:100%; max-width:320px; padding:20px; font:inherit; font-size:19px; color:#fff;
+           background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.55); border-radius:14px; }
+  button:active { transform:scale(.98); }
+  #now { font-size:17px; min-height:1.6em; }
+</style>
+</head>
+<body>
+  <h1>소리 비교</h1>
+  <p>두 단추를 번갈아 눌러 보세요.<br>휴대폰 음량은 그대로 두셔야 합니다.</p>
+  <button data-src="assets/a-old.mp4">① 직전 소리</button>
+  <button data-src="assets/b-new.mp4">② 새 소리</button>
+  <button data-stop>■ 멈추기</button>
+  <p id="now"></p>
+  <audio id="p" loop></audio>
+<script>
+  const audio = document.getElementById('p');
+  const now = document.getElementById('now');
+  document.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    if (b.hasAttribute('data-stop')) { audio.pause(); now.textContent = '멈춤'; return; }
+    audio.src = b.dataset.src;
+    audio.currentTime = 0;
+    audio.play().then(() => { now.textContent = '재생 중 — ' + b.textContent.trim(); })
+                .catch((e) => { now.textContent = '재생 실패: ' + e.name; });
+  }));
+</script>
+</body>
+</html>
