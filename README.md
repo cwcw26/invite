@@ -28,3 +28,18 @@ cp assets/bgm.mp4 site/cover/assets/bgm.mp4
 ```
 
 `thumb.jpg` 는 800×420 화면을 1.5배로 찍은 1200×630 그림입니다. 표지를 고쳤으면 다시 찍습니다.
+
+## 새 주소 판 (`https://sanneomeosam.pages.dev`)
+
+같은 초대장을 Cloudflare Pages 무료 주소에도 올립니다. 이 저장소가 아니라 작업 폴더의 `pages/` 를
+wrangler 로 직접 올립니다 (Cloudflare 계정 cwcw5256@gmail.com, 프로젝트 `sanneomeosam`).
+
+```
+python3 scripts/build_assets.py
+python3 scripts/make_site.py . pages
+python3 scripts/add_og.py pages https://sanneomeosam.pages.dev/
+cp assets/bgm-v6.mp4 pages/assets/ && cp site/chodae/thumb.jpg pages/
+# 작업 폴더 이름에 띄어쓰기가 있으면 wrangler 가 이름을 잘못 읽는다 — 공백 없는 곳에 복사해서 올린다
+cp -R pages /tmp/sanneomeosam && cd /tmp/sanneomeosam
+npx wrangler pages deploy . --project-name=sanneomeosam --branch=main --commit-dirty=true
+```
